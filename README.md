@@ -1,0 +1,3 @@
+# Automated-README-Repo
+
+This repository is automatically updated by a Python script 10 times per day.
