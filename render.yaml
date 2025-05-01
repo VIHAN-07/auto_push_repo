@@ -1,0 +1,12 @@
+services:
+  - type: cron
+    name: auto-readme-updater
+    schedule: "*/144 * * * *"   # every 144 minutes (~2.4 h)
+    envVars:
+      - key: GITHUB_USERNAME
+        fromSecret: GITHUB_USERNAME
+      - key: REPO_NAME
+        fromSecret: REPO_NAME
+      - key: GITHUB_TOKEN
+        fromSecret: GITHUB_TOKEN
+    command: python push_script.py
