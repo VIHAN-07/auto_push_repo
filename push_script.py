@@ -3,7 +3,7 @@ import os
 import subprocess
 from datetime import datetime
 
-# Load .env (locally) or environment (in Render)
+# Load environment variables (Render injects these)
 load_dotenv()
 
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME")
@@ -11,6 +11,7 @@ REPO_NAME       = os.getenv("REPO_NAME")
 TOKEN           = os.getenv("GITHUB_TOKEN")
 BRANCH          = os.getenv("GIT_BRANCH", "main")
 
+# Validate
 if not all([GITHUB_USERNAME, REPO_NAME, TOKEN]):
     raise EnvironmentError("GITHUB_USERNAME, REPO_NAME, and GITHUB_TOKEN must be set")
 
@@ -20,23 +21,26 @@ def update_readme():
         f.write(f"\nUpdated on {now}")
 
 def push_to_github():
-    repo_url = f"https://{GITHUB_USERNAME}:{TOKEN}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
-
-    # 1. Ensure we have the branch locally (reset to match origin)
-    subprocess.run(["git", "fetch", "origin"], check=True)
-    subprocess.run(
-        ["git", "checkout", "-B", BRANCH, f"origin/{BRANCH}"],
-        check=True
-    )
-
-    # 2. Configure Git identity
+    # Configure Git identity
     subprocess.run(["git", "config", "user.name", "Auto Bot"], check=True)
     subprocess.run(["git", "config", "user.email", "bot@example.com"], check=True)
 
-    # 3. Stage, commit, and push
+    # Stage and commit
     subprocess.run(["git", "add", "README.md"], check=True)
-    subprocess.run(["git", "commit", "-m", "Automated README update"], check=True)
-    subprocess.run(["git", "push", repo_url, BRANCH], check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Automated README update"],
+        check=True,
+        stderr=subprocess.DEVNULL  # ignore "nothing to commit" message
+    )
+
+    # Build the authenticated repo URL
+    repo_url = f"https://{GITHUB_USERNAME}:{TOKEN}@github.com/{GITHUB_USERNAME}/{REPO_NAME}.git"
+
+    # Push current HEAD to your branch
+    subprocess.run(
+        ["git", "push", repo_url, f"HEAD:{BRANCH}"],
+        check=True
+    )
 
 if __name__ == "__main__":
     update_readme()
